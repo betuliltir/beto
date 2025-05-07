@@ -1,9 +1,14 @@
+// pages/Login.tsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { UserRole } from '../types';
 import { login } from '../services/api';
 
-const Login = () => {
+interface LoginProps {
+  onLogin: () => void;
+}
+
+const Login = ({ onLogin }: LoginProps) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -18,6 +23,7 @@ const Login = () => {
     
     try {
       await login(formData);
+      onLogin();
       navigate('/home');
     } catch (err: any) {
       setError(err.response?.data?.message || 'An error occurred during login');
@@ -106,4 +112,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;

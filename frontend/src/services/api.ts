@@ -40,6 +40,7 @@ export const register = async (credentials: RegisterCredentials) => {
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  return true;
 };
 
 export default api; 

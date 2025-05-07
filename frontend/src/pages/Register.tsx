@@ -1,13 +1,19 @@
+// pages/Register.tsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { UserRole } from '../types';
 import { register } from '../services/api';
 
-const Register = () => {
+interface RegisterProps {
+  onRegister: () => void;
+}
+
+const Register = ({ onRegister }: RegisterProps) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     fullName: '',
     role: 'student' as UserRole,
     studentId: '',
@@ -18,55 +24,20 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     try {
-      await register(formData);
+      // Exclude confirmPassword from the data sent to the server
+      const { confirmPassword, ...registerData } = formData;
+      await register(registerData);
+      onRegister();
       navigate('/home');
     } catch (err: any) {
       setError(err.response?.data?.message || 'An error occurred during registration');
-    }
-  };
-
-  const renderRoleSpecificField = () => {
-    switch (formData.role) {
-      case 'student':
-        return (
-          <div>
-            <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">
-              Student ID
-            </label>
-            <input
-              id="studentId"
-              name="studentId"
-              type="text"
-              required
-              className="mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Enter your student ID"
-              value={formData.studentId}
-              onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-            />
-          </div>
-        );
-      case 'clubAdmin':
-        return (
-          <div>
-            <label htmlFor="clubName" className="block text-sm font-medium text-gray-700">
-              Club Name
-            </label>
-            <input
-              id="clubName"
-              name="clubName"
-              type="text"
-              required
-              className="mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Enter your club name"
-              value={formData.clubName}
-              onChange={(e) => setFormData({ ...formData, clubName: e.target.value })}
-            />
-          </div>
-        );
-      default:
-        return null;
     }
   };
 
@@ -75,7 +46,7 @@ const Register = () => {
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
+            Register for InterClub
           </h2>
         </div>
         {error && (
@@ -94,8 +65,8 @@ const Register = () => {
                 name="fullName"
                 type="text"
                 required
-                className="mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your full name"
+                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Full Name"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               />
@@ -109,8 +80,8 @@ const Register = () => {
                 name="email"
                 type="email"
                 required
-                className="mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your email"
+                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
@@ -124,10 +95,25 @@ const Register = () => {
                 name="password"
                 type="password"
                 required
-                className="mt-1 appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Create a password"
+                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
+                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               />
             </div>
             <div>
@@ -146,7 +132,42 @@ const Register = () => {
                 <option value="universityAdmin">University Admin</option>
               </select>
             </div>
-            {renderRoleSpecificField()}
+            
+            {formData.role === 'student' && (
+              <div>
+                <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">
+                  Student ID
+                </label>
+                <input
+                  id="studentId"
+                  name="studentId"
+                  type="text"
+                  required
+                  className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Student ID"
+                  value={formData.studentId}
+                  onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                />
+              </div>
+            )}
+            
+            {formData.role === 'clubAdmin' && (
+              <div>
+                <label htmlFor="clubName" className="block text-sm font-medium text-gray-700">
+                  Club Name
+                </label>
+                <input
+                  id="clubName"
+                  name="clubName"
+                  type="text"
+                  required
+                  className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Club Name"
+                  value={formData.clubName}
+                  onChange={(e) => setFormData({ ...formData, clubName: e.target.value })}
+                />
+              </div>
+            )}
           </div>
 
           <div>
@@ -160,7 +181,7 @@ const Register = () => {
         </form>
         <div className="text-center mt-4">
           <Link to="/login" className="text-indigo-600 hover:text-indigo-500">
-            Already have an account? Sign in
+            Already have an account? Login here
           </Link>
         </div>
       </div>
@@ -168,4 +189,4 @@ const Register = () => {
   );
 };
 
-export default Register; 
+export default Register;

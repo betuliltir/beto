@@ -1,11 +1,11 @@
+// App.tsx
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Home from './pages/Home';
 import PosterApproval from './components/PosterApproval';
 import NotFound from './components/NotFound';
-
-// Add any other imports you need
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -20,6 +20,14 @@ const App = () => {
     }
   }, []);
   
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
   // Protected route component
   const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     if (!isAuthenticated) {
@@ -33,19 +41,23 @@ const App = () => {
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={
-          isAuthenticated ? <Navigate to="/home" /> : <Login />
+          isAuthenticated ? <Navigate to="/home" /> : <Login onLogin={handleLogin} />
+        } />
+        
+        <Route path="/register" element={
+          isAuthenticated ? <Navigate to="/home" /> : <Register onRegister={handleLogin} />
         } />
         
         {/* Protected routes */}
         <Route path="/home" element={
           <ProtectedRoute>
-            <Home />
+            <Home onLogout={handleLogout} />
           </ProtectedRoute>
         } />
         
         <Route path="/poster-approval" element={
           <ProtectedRoute>
-            <PosterApproval />
+            <PosterApproval onLogout={handleLogout} />
           </ProtectedRoute>
         } />
         

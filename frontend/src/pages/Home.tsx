@@ -1,130 +1,77 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { logout } from '../services/api';
+// pages/Home.tsx
 import Sidebar from '../components/Sidebar';
-import type { Announcement, Event } from '../types';
+import Navbar from '../components/Navbar';
 
-const Home = () => {
-  const navigate = useNavigate();
-  const [announcements] = useState<Announcement[]>([
-    {
-      id: '1',
-      title: 'Welcome to InterClub!',
-      content: 'We are excited to announce the launch of our new platform.',
-      date: '2024-03-06',
-      author: 'University Admin',
-    },
-    // Add more announcements as needed
-  ]);
+interface HomeProps {
+  onLogout: () => void;
+}
 
-  const [events] = useState<Event[]>([
-    {
-      id: '1',
-      title: 'Spring Club Fair',
-      description: 'Join us for the annual spring club fair!',
-      date: '2024-03-15',
-      location: 'Main Campus Square',
-      organizer: 'Student Activities Office',
-    },
-    // Add more events as needed
-  ]);
-
-  // Get user info from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+const Home = ({ onLogout }: HomeProps) => {
+  // Get user role from localStorage
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
+  const userRole = user?.role || 'student';
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-indigo-600">InterClub</h1>
+      <Navbar onLogout={onLogout} />
+      
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-1">
+              <Sidebar userRole={userRole} />
             </div>
-            <nav className="flex space-x-4">
-              <Link to="/home" className="text-gray-700 hover:text-indigo-600">
-                Home
-              </Link>
-              <Link to="/profile" className="text-gray-700 hover:text-indigo-600">
-                Profile
-              </Link>
-              <button
-                className="text-gray-700 hover:text-indigo-600"
-                onClick={() => {
-                  logout();
-                  navigate('/login');
-                }}
-              >
-                Logout
-              </button>
-            </nav>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Sidebar - Quick Access Links */}
-          <Sidebar userRole={user.role} />
-
-          {/* Middle Section - Announcements */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Announcements</h2>
-            <div className="space-y-4">
-              {announcements.map((announcement) => (
-                <div key={announcement.id} className="border-b pb-4">
-                  <h3 className="font-medium">{announcement.title}</h3>
-                  <p className="text-gray-600 mt-1">{announcement.content}</p>
-                  <div className="text-sm text-gray-500 mt-2">
-                    {announcement.date} • {announcement.author}
-                  </div>
+            
+            <div className="md:col-span-3">
+              {/* Main content */}
+              <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div className="px-4 py-5 sm:px-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Welcome to InterClub
+                  </h3>
+                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                    Your university club management platform
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Sidebar - Upcoming Events & News */}
-          <div className="space-y-6">
-            {/* Upcoming Events */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
-              <div className="space-y-4">
-                {events.map((event) => (
-                  <div key={event.id} className="border-b pb-4">
-                    <h3 className="font-medium">{event.title}</h3>
-                    <p className="text-gray-600 mt-1">{event.description}</p>
-                    <div className="text-sm text-gray-500 mt-2">
-                      {event.date} • {event.location}
+                <div className="border-t border-gray-200">
+                  <div className="px-4 py-5 sm:p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-white p-4 rounded-lg shadow">
+                        <h4 className="text-md font-medium text-gray-900 mb-2">
+                          We are excited to announce the launch of our new platform.
+                        </h4>
+                        <p className="text-sm text-gray-500">2024-03-06 • University Admin</p>
+                      </div>
+                      
+                      <div className="bg-white p-4 rounded-lg shadow">
+                        <h4 className="text-md font-medium text-gray-900 mb-2">
+                          Join us for the annual spring club fair!
+                        </h4>
+                        <p className="text-sm text-gray-500">2024-03-15 • Main Campus Square</p>
+                      </div>
+                      
+                      <div className="bg-white p-4 rounded-lg shadow">
+                        <h4 className="text-md font-medium text-gray-900 mb-2">
+                          Register your new club for the upcoming semester.
+                        </h4>
+                      </div>
+                      
+                      <div className="bg-white p-4 rounded-lg shadow">
+                        <h4 className="text-md font-medium text-gray-900 mb-2">
+                          Join us for a workshop on effective club management.
+                        </h4>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Club News Highlights */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Club News</h2>
-              <div className="space-y-4">
-                <div className="border-b pb-4">
-                  <h3 className="font-medium">New Club Registration Open</h3>
-                  <p className="text-gray-600 mt-1">
-                    Register your new club for the upcoming semester.
-                  </p>
-                </div>
-                <div className="border-b pb-4">
-                  <h3 className="font-medium">Club Leadership Workshop</h3>
-                  <p className="text-gray-600 mt-1">
-                    Join us for a workshop on effective club management.
-                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
 
-export default Home; 
+export default Home;
