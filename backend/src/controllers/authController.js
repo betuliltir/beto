@@ -39,6 +39,7 @@ exports.register = async (req, res) => {
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        clubName: user.clubName, 
       },
     });
   } catch (error) {
@@ -72,6 +73,7 @@ exports.login = async (req, res) => {
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        clubName: user.clubName || '',
       },
     });
   } catch (error) {
