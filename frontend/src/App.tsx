@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import PosterApproval from './components/PosterApproval';
 import NotFound from './components/NotFound';
+import Club from './pages/Club'; // You've imported it correctly
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -52,6 +53,13 @@ const App = () => {
         <Route path="/home" element={
           <ProtectedRoute>
             <Home onLogout={handleLogout} />
+          </ProtectedRoute>
+        } />
+        
+        {/* ADD THIS ROUTE - it was missing! */}
+        <Route path="/clubs" element={
+          <ProtectedRoute>
+            <Club onLogout={handleLogout} />
           </ProtectedRoute>
         } />
         

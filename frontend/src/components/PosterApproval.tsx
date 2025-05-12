@@ -38,7 +38,7 @@ const PosterApproval = ({ onLogout }: PosterApprovalProps) => {
   const [currentPosterUrl, setCurrentPosterUrl] = useState<string>('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const baseUrl = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173';
+
 
   // Fetch posters on component mount
   useEffect(() => {
@@ -47,13 +47,12 @@ const PosterApproval = ({ onLogout }: PosterApprovalProps) => {
 
   // Helper function to fix image URLs
   const getImageUrl = (url: string) => {
-    // If URL already starts with http or https, return as is
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    
-    // Otherwise prepend the base URL
-    return `${baseUrl}${url}`;
+  
+    const baseBackendUrl = 'http://localhost:5001';
+    return `${baseBackendUrl}${url.startsWith('/uploads') ? url : `/uploads/${url}`}`;
   };
 
   // Modal open/close functions

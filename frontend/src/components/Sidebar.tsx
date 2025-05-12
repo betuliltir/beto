@@ -1,17 +1,19 @@
+// frontend/src/components/Sidebar.tsx
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   userRole?: string;
 }
 
-const Sidebar = ({ userRole }: SidebarProps) => {
+const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   // Base links for all user types
   const links = [
     { label: 'Event Calendar', path: '/home' },
-    { label: 'Club Membership', path: '/membership' },
+    { label: 'Clubs', path: '/clubs' }, // Changed from "Club Membership" to "Clubs"
     { label: 'Feedback', path: '/feedback' },
   ];
 
