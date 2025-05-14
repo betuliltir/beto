@@ -6,7 +6,11 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import PosterApproval from './components/PosterApproval';
 import NotFound from './components/NotFound';
-import Club from './pages/Club'; // You've imported it correctly
+import Club from './pages/Club'; 
+import ClubAdminEventCalendar from './pages/ClubAdminEventCalendar';
+import UniversityAdminEventCalendar from './pages/UniversityAdminEventCalendar';
+import StudentEventCalendar from './pages/StudentEventCalendar';
+
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -72,6 +76,9 @@ const App = () => {
         {/* Default routes */}
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/event-calendar" element={<ClubAdminEventCalendar />} />
+        <Route path="/admin-calendar" element={<UniversityAdminEventCalendar />} />
+        <Route path="/student-calendar" element={<StudentEventCalendar />} />
       </Routes>
     </BrowserRouter>
   );

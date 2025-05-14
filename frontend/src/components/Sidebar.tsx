@@ -1,42 +1,100 @@
-// frontend/src/components/Sidebar.tsx
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
-  userRole?: string;
+  userRole: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const location = useLocation();
-  const navigate = useNavigate();
+  const currentPath = location.pathname;
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
 
-  // Base links for all user types
-  const links = [
-    { label: 'Event Calendar', path: '/home' },
-    { label: 'Clubs', path: '/clubs' }, // Changed from "Club Membership" to "Clubs"
-    { label: 'Feedback', path: '/feedback' },
-  ];
+  const isActive = (path: string) => currentPath === path;
 
-  // Add poster approval link for club or university admins
-  if (userRole === 'clubAdmin' || userRole === 'universityAdmin') {
-    links.push({ label: 'Poster Approval', path: '/poster-approval' });
-  }
+  const getLinkStyle = (path: string) =>
+    isActive(path)
+      ? 'block py-2 px-4 bg-indigo-100 text-indigo-800 font-medium rounded'
+      : 'block py-2 px-4 text-gray-700 hover:bg-indigo-50 rounded';
+
+  const renderEventCalendarLink = () => {
+    if (userRole === 'student') {
+      return (
+        <li>
+          <Link to="/student-calendar" className={getLinkStyle('/student-calendar')}>
+            Event Calendar
+          </Link>
+        </li>
+      );
+    }
+    if (userRole === 'clubAdmin') {
+      return (
+        <li>
+          <Link to="/event-calendar" className={getLinkStyle('/event-calendar')}>
+            Event Calendar
+          </Link>
+        </li>
+      );
+    }
+    if (userRole === 'universityAdmin') {
+      return (
+        <li>
+          <Link to="/admin-calendar" className={getLinkStyle('/admin-calendar')}>
+            Event Calendar
+          </Link>
+        </li>
+      );
+    }
+    return null;
+  };
+
+  const renderUserInfo = () => {
+    if (userRole === 'clubAdmin' && user?.clubName) {
+      return (
+        <>
+          <h3 className="text-sm text-indigo-800 font-semibold text-center">Club Admin</h3>
+          <p className="text-indigo-700 font-medium text-center">{user.clubName}</p>
+        </>
+      );
+    }
+    if (userRole === 'universityAdmin') {
+      return <h3 className="text-sm text-indigo-800 font-semibold text-center">University Admin</h3>;
+    }
+    if (userRole === 'student') {
+      return <h3 className="text-sm text-indigo-800 font-semibold text-center">Student</h3>;
+    }
+    return null;
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
-      <div className="space-y-4">
-        {links.map(link => (
-          <button
-            key={link.label}
-            className={`w-full text-left px-4 py-2 rounded-lg hover:bg-indigo-100 transition
-              ${location.pathname === link.path ? 'bg-indigo-200 text-indigo-800 font-semibold border-l-4 border-indigo-500' : 'bg-indigo-50 text-indigo-700'}`}
-            onClick={() => navigate(link.path)}
-          >
-            {link.label}
-          </button>
-        ))}
-      </div>
+    <div className="bg-white p-4 rounded-lg shadow-md">
+      {(userRole === 'clubAdmin' || userRole === 'universityAdmin' || userRole === 'student') && (
+        <div className="mb-6 p-3 bg-indigo-50 rounded border border-indigo-100">
+          {renderUserInfo()}
+        </div>
+      )}
+
+      <ul className="space-y-2">
+        {renderEventCalendarLink()}
+        <li>
+          <Link to="/clubs" className={getLinkStyle('/clubs')}>
+            Clubs
+          </Link>
+        </li>
+        <li>
+          <Link to="/feedback" className={getLinkStyle('/feedback')}>
+            Feedback
+          </Link>
+        </li>
+        {(userRole === 'universityAdmin' || userRole === 'clubAdmin') && (
+          <li>
+            <Link to="/poster-approval" className={getLinkStyle('/poster-approval')}>
+              Poster Approval
+            </Link>
+          </li>
+        )}
+      </ul>
     </div>
   );
 };

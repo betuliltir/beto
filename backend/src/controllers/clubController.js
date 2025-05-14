@@ -1,30 +1,48 @@
+// backend/src/controllers/clubController.js
 const Club = require('../models/Club');
 
-// Get all clubs
+// Kulüpleri getirirken, kullanıcının üye olup olmadığı bilgisini ve üye sayısını da ekle
 exports.getClubs = async (req, res) => {
   try {
+    // Tüm kulüpleri members dizileriyle birlikte getir
     const clubs = await Club.find({});
     
-    res.status(200).json(clubs);
+    // Kullanıcı için üyelik bilgisini ve üye sayısını ekle
+    const clubsWithExtras = clubs.map(club => {
+      const clubObj = club.toObject();
+      
+      // Üye sayısını ekle
+      clubObj.memberCount = club.members ? club.members.length : 0;
+      
+      // Kullanıcının üye olup olmadığını kontrol et
+      if (!club.members) {
+        clubObj.isMember = false;
+      } else {
+        clubObj.isMember = club.members.some(memberId => 
+          memberId.toString() === req.user._id.toString()
+        );
+      }
+      
+      return clubObj;
+    });
+    
+    res.status(200).json(clubsWithExtras);
   } catch (error) {
     console.error('Error in getClubs:', error);
     res.status(500).json({ message: 'Server error while fetching clubs', error: error.message });
   }
 };
 
-// Get a single club by ID
-exports.getClub = async (req, res) => {
+// Public clubs without authentication
+exports.getPublicClubs = async (req, res) => {
   try {
-    const club = await Club.findById(req.params.id);
-    
-    if (!club) {
-      return res.status(404).json({ message: 'Club not found' });
-    }
-    
-    res.status(200).json(club);
+    console.log('Public clubs controller called');
+    const clubs = await Club.find({}, 'name _id');
+    console.log('Public clubs found:', clubs.length);
+    res.status(200).json(clubs);
   } catch (error) {
-    console.error('Error in getClub:', error);
-    res.status(500).json({ message: 'Server error while fetching club', error: error.message });
+    console.error('Error in getPublicClubs:', error);
+    res.status(500).json({ message: 'Server error while fetching clubs', error: error.message });
   }
 };
 
@@ -51,7 +69,8 @@ exports.createClub = async (req, res) => {
       description,
       category: category || undefined,
       clubImage,
-      createdBy: req.user._id
+      createdBy: req.user._id,
+      members: [] // Boş bir members dizisi başlat
     });
     
     console.log('Club to be saved:', club);
@@ -170,5 +189,105 @@ exports.deleteClub = async (req, res) => {
   } catch (error) {
     console.error('Error in deleteClub:', error);
     res.status(500).json({ message: 'Server error while deleting club', error: error.message });
+  }
+};
+
+// Kulübe katılma
+exports.joinClub = async (req, res) => {
+  try {
+    console.log('Join club request - Club ID:', req.params.id);
+    console.log('Join club request - User:', req.user);
+    
+    const club = await Club.findById(req.params.id);
+    
+    if (!club) {
+      return res.status(404).json({ message: 'Club not found' });
+    }
+    
+    // Eğer members dizisi yoksa oluştur
+    if (!club.members) {
+      club.members = [];
+    }
+    
+    // Kullanıcı zaten üye mi kontrol et
+    if (club.members.some(memberId => memberId.toString() === req.user._id.toString())) {
+      return res.status(400).json({ message: 'You are already a member of this club' });
+    }
+    
+    // Kullanıcıyı üyeler listesine ekle
+    club.members.push(req.user._id);
+    await club.save();
+    
+    res.status(200).json({ message: 'Successfully joined the club' });
+  } catch (error) {
+    console.error('Error in joinClub:', error);
+    res.status(500).json({ message: 'Server error while joining club', error: error.message });
+  }
+};
+
+// Kulüpten çıkma
+exports.leaveClub = async (req, res) => {
+  try {
+    console.log('Leave club request - Club ID:', req.params.id);
+    console.log('Leave club request - User:', req.user);
+    
+    const club = await Club.findById(req.params.id);
+    
+    if (!club) {
+      return res.status(404).json({ message: 'Club not found' });
+    }
+    
+    // Eğer members dizisi yoksa hata döndür
+    if (!club.members) {
+      return res.status(400).json({ message: 'You are not a member of this club' });
+    }
+    
+    // Kullanıcı üye değilse hata döndür
+    if (!club.members.some(memberId => memberId.toString() === req.user._id.toString())) {
+      return res.status(400).json({ message: 'You are not a member of this club' });
+    }
+    
+    // Kullanıcıyı üyeler listesinden çıkar
+    club.members = club.members.filter(memberId => memberId.toString() !== req.user._id.toString());
+    await club.save();
+    
+    res.status(200).json({ message: 'Successfully left the club' });
+  } catch (error) {
+    console.error('Error in leaveClub:', error);
+    res.status(500).json({ message: 'Server error while leaving club', error: error.message });
+  }
+};
+
+// Kulüp üyelerini getirme
+exports.getClubMembers = async (req, res) => {
+  try {
+    console.log('Get club members request - Club ID:', req.params.clubId);
+    
+    // Kulübü bul
+    const club = await Club.findById(req.params.clubId);
+    
+    if (!club) {
+      return res.status(404).json({ message: 'Club not found' });
+    }
+    
+    // Kulübün üyelerini popüle et
+    const clubWithMembers = await Club.findById(req.params.clubId)
+      .populate('members', 'fullName email _id');
+    
+    if (!clubWithMembers.members || clubWithMembers.members.length === 0) {
+      return res.status(200).json([]);
+    }
+    
+    // İstenilen formatta üye bilgilerini döndür
+    const members = clubWithMembers.members.map(member => ({
+      _id: member._id,
+      name: member.fullName,
+      email: member.email
+    }));
+    
+    res.status(200).json(members);
+  } catch (error) {
+    console.error('Error in getClubMembers:', error);
+    res.status(500).json({ message: 'Server error while fetching club members', error: error.message });
   }
 };

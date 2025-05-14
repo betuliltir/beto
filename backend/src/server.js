@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const eventRoutes = require('./routes/eventRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +18,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use('/api/events', eventRoutes);
 
 // Create uploads directory if it doesn't exist
 const fs = require('fs');

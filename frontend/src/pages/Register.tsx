@@ -1,15 +1,19 @@
 // pages/Register.tsx
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { UserRole } from '../types';
-import { register } from '../services/api';
+import { register, getPublicClubs } from '../services/api';
+import type { Club } from '../services/api';
+
+// Define UserRole type if it's not imported from types.ts
+type UserRole = 'student' | 'clubAdmin' | 'universityAdmin';
 
 interface RegisterProps {
   onRegister: () => void;
 }
 
-const Register = ({ onRegister }: RegisterProps) => {
+const Register: React.FC<RegisterProps> = ({ onRegister }) => {
   const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -19,7 +23,29 @@ const Register = ({ onRegister }: RegisterProps) => {
     studentId: '',
     clubName: '',
   });
+  
   const [error, setError] = useState('');
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch clubs when role changes to 'clubAdmin'
+  useEffect(() => {
+    const fetchClubs = async () => {
+      if (formData.role === 'clubAdmin') {
+        try {
+          setLoading(true);
+          const data = await getPublicClubs();
+          setClubs(data);
+        } catch (err) {
+          console.error('Error fetching clubs:', err);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchClubs();
+  }, [formData.role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +67,17 @@ const Register = ({ onRegister }: RegisterProps) => {
     }
   };
 
+  // Handle role change
+  const handleRoleChange = (role: UserRole) => {
+    setFormData({
+      ...formData,
+      role,
+      // Reset role-specific fields when changing roles
+      studentId: role === 'student' ? formData.studentId : '',
+      clubName: role === 'clubAdmin' ? formData.clubName : '',
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
@@ -49,11 +86,13 @@ const Register = ({ onRegister }: RegisterProps) => {
             Register for InterClub
           </h2>
         </div>
+        
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded relative" role="alert">
             <span className="block sm:inline">{error}</span>
           </div>
         )}
+        
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
@@ -71,6 +110,7 @@ const Register = ({ onRegister }: RegisterProps) => {
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               />
             </div>
+            
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -86,6 +126,7 @@ const Register = ({ onRegister }: RegisterProps) => {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
+            
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
@@ -101,6 +142,7 @@ const Register = ({ onRegister }: RegisterProps) => {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
+            
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password
@@ -116,6 +158,7 @@ const Register = ({ onRegister }: RegisterProps) => {
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               />
             </div>
+            
             <div>
               <label htmlFor="role" className="block text-sm font-medium text-gray-700">
                 Role
@@ -125,7 +168,7 @@ const Register = ({ onRegister }: RegisterProps) => {
                 name="role"
                 className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+                onChange={(e) => handleRoleChange(e.target.value as UserRole)}
               >
                 <option value="student">Student</option>
                 <option value="clubAdmin">Club Admin</option>
@@ -156,16 +199,44 @@ const Register = ({ onRegister }: RegisterProps) => {
                 <label htmlFor="clubName" className="block text-sm font-medium text-gray-700">
                   Club Name
                 </label>
-                <input
-                  id="clubName"
-                  name="clubName"
-                  type="text"
-                  required
-                  className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Club Name"
-                  value={formData.clubName}
-                  onChange={(e) => setFormData({ ...formData, clubName: e.target.value })}
-                />
+                
+                {loading ? (
+                  <div className="flex justify-center items-center py-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-600"></div>
+                  </div>
+                ) : clubs.length > 0 ? (
+                  <select
+                    id="clubName"
+                    name="clubName"
+                    required
+                    className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                    value={formData.clubName}
+                    onChange={(e) => setFormData({ ...formData, clubName: e.target.value })}
+                  >
+                    <option value="">Select a club</option>
+                    {clubs.map(club => (
+                      <option key={club._id} value={club.name}>
+                        {club.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div>
+                    <input
+                      id="clubName"
+                      name="clubName"
+                      type="text"
+                      required
+                      className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 bg-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      placeholder="No existing clubs found. Enter club name."
+                      value={formData.clubName}
+                      onChange={(e) => setFormData({ ...formData, clubName: e.target.value })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      No existing clubs found. Enter a new club name.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -179,6 +250,7 @@ const Register = ({ onRegister }: RegisterProps) => {
             </button>
           </div>
         </form>
+        
         <div className="text-center mt-4">
           <Link to="/login" className="text-indigo-600 hover:text-indigo-500">
             Already have an account? Login here

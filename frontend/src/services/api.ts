@@ -7,9 +7,19 @@ export interface Club {
   _id: string;
   name: string;
   description: string;
-  clubImage?: string;
   category?: string;
+  clubImage?: string;
   createdAt: string;
+  members?: string[]; // Array of user IDs or member objects
+  isMember?: boolean; // For the current user
+  memberCount?: number; // Number of members in the club
+}
+
+// Add interface for club members
+export interface ClubMember {
+  _id: string;
+  name: string;
+  email: string;
 }
 
 export interface NewClub {
@@ -77,6 +87,31 @@ export const getAllClubs = async () => {
   return response.data;
 };
 
+// Get public clubs (for unauthenticated access)
+export const getPublicClubs = async () => {
+  try {
+    console.log('Fetching public clubs');
+    // Using axios directly to avoid token being added by interceptor
+    const response = await axios.get(`${API_URL}/clubs/public`);
+    console.log('Public clubs response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching public clubs:', error);
+    
+    // Fallback to hardcoded clubs if API call fails
+    const fallbackClubs = [
+      { _id: '1', name: 'Sports Club' },
+      { _id: '2', name: 'Art Club' },
+      { _id: '3', name: 'Music Club' },
+      { _id: '4', name: 'Tech Club' },
+      { _id: '5', name: 'Science Club' }
+    ];
+    
+    console.log('Returning fallback clubs');
+    return fallbackClubs;
+  }
+};
+
 export const createClub = async (clubData: NewClub) => {
   const formData = new FormData();
   formData.append('name', clubData.name);
@@ -100,6 +135,91 @@ export const createClub = async (clubData: NewClub) => {
 
 export const deleteClub = async (clubId: string) => {
   const response = await api.delete(`/clubs/${clubId}`);
+  return response.data;
+};
+
+// Join a club
+export const joinClub = async (clubId: string) => {
+  const response = await api.post(`/clubs/${clubId}/join`);
+  return response.data;
+};
+
+// Leave a club
+export const leaveClub = async (clubId: string) => {
+  const response = await api.post(`/clubs/${clubId}/leave`);
+  return response.data;
+};
+
+// Get club members - FRONTEND implementation (not backend)
+export const getClubMembers = async (clubId: string): Promise<ClubMember[]> => {
+  const response = await api.get(`/clubs/${clubId}/members`);
+  return response.data;
+};
+
+// Event interfaces
+export interface Event {
+  _id: string;
+  title: string;
+  description: string;
+  location: string;
+  eventType: string;
+  start: string;
+  end: string;
+  club: string | Club;
+  clubName: string;
+  createdBy: string;
+  status: 'pending' | 'approved' | 'rejected';
+  feedback: string;
+  participants: string[];
+  createdAt: string;
+}
+
+export interface NewEvent {
+  title: string;
+  description: string;
+  location: string;
+  eventType: string;
+  start: string;
+  end: string;
+}
+
+// Get all events (filtered by user role)
+export const getEvents = async (): Promise<Event[]> => {
+  const response = await api.get('/events');
+  return response.data;
+};
+
+// Create new event (for club admins)
+export const createEvent = async (eventData: NewEvent): Promise<Event> => {
+  const response = await api.post('/events', eventData);
+  return response.data;
+};
+
+// Update event status (for university admins)
+export const updateEventStatus = async (
+  eventId: string, 
+  status: 'approved' | 'rejected', 
+  feedback?: string
+): Promise<Event> => {
+  const response = await api.patch(`/events/${eventId}/status`, { status, feedback });
+  return response.data;
+};
+
+// Update event details (for club admins)
+export const updateEvent = async (eventId: string, eventData: Partial<NewEvent>): Promise<Event> => {
+  const response = await api.patch(`/events/${eventId}`, eventData);
+  return response.data;
+};
+
+// Join event (for students)
+export const joinEvent = async (eventId: string): Promise<{ message: string; event: Event }> => {
+  const response = await api.post(`/events/${eventId}/join`);
+  return response.data;
+};
+
+// Leave event (for students)
+export const leaveEvent = async (eventId: string): Promise<{ message: string; event: Event }> => {
+  const response = await api.post(`/events/${eventId}/leave`);
   return response.data;
 };
 

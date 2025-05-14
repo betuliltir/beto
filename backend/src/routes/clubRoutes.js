@@ -34,11 +34,20 @@ const upload = multer({
   }
 });
 
-// Routes
-router.get('/', protect, clubController.getClubs);
-router.post('/', protect, upload.single('clubImage'), clubController.createClub);
+// PUBLIC ROUTE - Bunu diğer parameterli rotalardan önce koy!
+router.get('/public', async (req, res) => {
+  try {
+    console.log('Public clubs route called');
+    const clubs = await Club.find({}, 'name _id');
+    console.log('Public clubs found:', clubs);
+    res.status(200).json(clubs);
+  } catch (error) {
+    console.error('Error in getPublicClubs:', error);
+    res.status(500).json({ message: 'Server error while fetching clubs', error: error.message });
+  }
+});
 
-// Test route for debugging deletion issues - place before other parameterized routes
+// Test route for debugging deletion issues
 router.get('/test-delete/:id', protect, async (req, res) => {
   try {
     console.log('Test delete route - User:', req.user);
@@ -64,8 +73,17 @@ router.get('/test-delete/:id', protect, async (req, res) => {
   }
 });
 
-router.get('/:id', protect, clubController.getClub);
+// Protected routes
+router.get('/', protect, clubController.getClubs);
+router.post('/', protect, upload.single('clubImage'), clubController.createClub);
+router.get('/public', clubController.getPublicClubs);
 router.patch('/:id', protect, upload.single('clubImage'), clubController.updateClub);
 router.delete('/:id', protect, clubController.deleteClub);
+router.post('/:id/join', protect, clubController.joinClub);
+router.post('/:id/leave', protect, clubController.leaveClub);
+
+
+// Add the new route for fetching club members
+router.get('/:clubId/members', protect, clubController.getClubMembers);
 
 module.exports = router;
